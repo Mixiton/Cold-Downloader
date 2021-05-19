@@ -27,6 +27,7 @@ def download():
     else:
         pass
 
+#Trys to get the playlist
 def start_dowloading():
     global actived
     try:
@@ -39,17 +40,22 @@ def start_dowloading():
         actived = False
         lblState.configure(text='Please enter a correct link', foreground = "red")
 
+#After the verification of the existence of the playlist, download starting
 def playlist_download(p):
     global actived
     lblState.configure(text="")
+    #asking the path wanted by the user for downloading the playlist
     path = tkinter.filedialog.askdirectory()
+    #customization of the path with the playlist title
     path+="/"+p.title+"/"
+    #window adjustement for download videos
     dl_btn.configure(state="disabled")
     mp3_checkbox.configure(state="disabled")
     link_input.configure(state="disabled")
     root.minsize(height=240, width=480)
     root.maxsize(height=240, width=480)
     k=1
+    #verification if the file path already exist, and adjusting it if necessary
     if os.path.isdir(path):
         continue_searching = True
         while continue_searching == True:
@@ -60,9 +66,11 @@ def playlist_download(p):
             else:
                 continue_searching = False
     i=0
+    #calling the function that will download the videos of the playlist one by one
     for url in p.video_urls:
         i+=1
         yt = YouTube(url)
+        #registering of functions which will serve to display the progression of the downloading
         yt.register_on_progress_callback(progress)
         yt.register_on_complete_callback(complete)
         try:
@@ -70,6 +78,7 @@ def playlist_download(p):
         except Exception as e:
             lblState.configure(text=e)
             video_download(yt, path, i)
+    #adjustement of the window once the playlist is downloaded
     label_percent.configure(text="Downloaded")
     messagebox.showinfo("info", "playlist downloaded")
     dl_btn.configure(state="normal")
@@ -81,15 +90,17 @@ def playlist_download(p):
     link_input.delete(0, END)
     actived = False
 
-
+#function that download the videos
 def video_download(yt, path, i):
     try:
+        #setting design of the video downoading
         lblState.configure(text="Downloading "+yt.title)
         image_label.configure(image = set_thumbnail(yt.thumbnail_url))
         bar.configure(value=0)
         bar.place(x=70, y=200)
         label_percent.configure(text="Getting Video...")
         title = set_title(yt.title)
+        #verifying if the user checked the "Audio only" checkbox and downloading the video in function 
         if is_mp3.get():
             path = yt.streams.filter(only_audio=True, file_extension="mp4").first().download(output_path=path, filename=title, filename_prefix=str(i)+"_")
         else:
@@ -98,6 +109,7 @@ def video_download(yt, path, i):
         lblState.configure(text="Failed to get video. Retrying...")
         video_download(yt,path,i)
 
+# function that will display to the user the downloading progression
 def progress(stream, chunk, bytes_remaining):
     current = ((stream.filesize - bytes_remaining) / stream.filesize)
     progress = int(50 * current)
@@ -106,11 +118,13 @@ def progress(stream, chunk, bytes_remaining):
     texte = str(pourcent) + " %"
     label_percent.configure(text=texte)
 
+#function which displays that the video is downloaded and convert it if necessary
 def complete(stream, file_path):
     label_percent.configure(text="Downloading...")
     if is_mp3.get():
         Thread(target=convert, args=(file_path,)).start()
 
+#function to make the video title readable by the explorer.
 def set_title(s):
     s=s.replace(" ","_")
     s=s.replace(":","")
@@ -124,6 +138,7 @@ def set_title(s):
     s=s.replace('"', "")
     return s
 
+#conversion of the file which need to be
 def convert(path):
     if os.path.isfile(path):
         out_path = path.rsplit(".", 1)
@@ -133,6 +148,7 @@ def convert(path):
         subprocess.run(["ffmpeg", "-y","-i", path, out_path], stderr=subprocess.STDOUT, startupinfo=si)
         os.remove(path)
 
+#function called to display the video thumbnail to the user
 def set_thumbnail(url):
     raw_data = ""
     try:
@@ -148,7 +164,7 @@ def set_thumbnail(url):
     image_label.configure(image=imagesagrandmere)
     image_label.image = imagesagrandmere
 
-
+#settings of the window
 global actived
 actived = False
 root = tkinter.Tk()
