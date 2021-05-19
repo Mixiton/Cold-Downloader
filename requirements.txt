@@ -1,0 +1,4 @@
+pytube
+bs4
+pillow
+py2exe
